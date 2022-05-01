@@ -14,7 +14,7 @@ import coat as ct
 from coat.similarity import ES
 from data.dataset import Overlap
 from data.transform import random_transformation
-from ml.coat import energy, upper_bound
+from ml.coat import energy, upper_bound, predict
 from ml.evaluation import collect_all_instances, pearson, split, MultiClassConfusionMatrix, nfolds, shuffle
 from data.dataset import *
 from data.transform import TRANSFORMATIONS_DIR
@@ -498,24 +498,36 @@ def plot_E3():
 
 if __name__ == '__main__':
     """
-    usage :
-        python iccbr.py E1 Balance [run|draw]
-        python iccbr.py E2 Balance [generate|results|init_Li|draw]
-        python iccbr.py E3 [run|draw|plot]
+    Usage :
+        python iccbr.py complexity [Balance|Iris|Pima|Monks1|Monks2|Monks3|User|Voting|Wine]
+        python iccbr.py coat [Balance|Iris|Pima|Monks1|Monks2|Monks3|User|Voting|Wine]
+        python iccbr.py Exp1 Balance [run|draw]
+        python iccbr.py Exp2 Balance [generate|results|draw]
+        python iccbr.py Exp3 [run|draw|plot]
     """
     import sys
     method = sys.argv[1]
-    if method in ('E1', 'E2'):
+    if method in ('Exp1', 'Exp2','complexity', 'coat'):
         name = sys.argv[2]
         d = getattr(__import__(
             'data.dataset', fromlist=[name]), name)()
-        if method == 'E1':
+        if method == 'complexity':
+            Emax = upper_bound(len(d.train))
+            (E,prediction_time) = energy(d)
+            print(f'Complexity={int(E):d} ({E/Emax*100:.4f}% of {Emax})')
+            print(f'Total time = {prediction_time:.5f}s')
+        if method == 'coat':
+            (average_accuracy,std,average_prediction_time) = predict(d)
+            print(f'Average prediction time = {average_prediction_time:.5f} s')
+            print(f'Average accuracy = {average_accuracy:.5f}')
+            print(f'Std deviation = {std:.5f}')
+        if method == 'Exp1':
             op = sys.argv[3]
             if op == 'run':
                 run_E1(d)
             if op == 'draw':
                 draw_E1(d)
-        if method == 'E2':
+        if method == 'Exp2':
             op = sys.argv[3]
             if op == 'generate':
                 print(f'{d.name}')
@@ -526,7 +538,7 @@ if __name__ == '__main__':
                 print_results(d)
             if op == 'init_Li':
                 generate_random_transformations(d, 100)
-    if method == 'E3':
+    if method == 'Exp3':
         op = sys.argv[2]
         if op == 'run':
             run_E3()
